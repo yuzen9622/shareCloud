@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./style.css" />
+    <title>Share</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>資料共享</h1>
+      <div class="donwload" id="datas"></div>
+    </div>
+  </body>
+  <script>
+    let url = "http://35.75.66.92/data share";
+    async function getData() {
+      let donwloadContainer = document.getElementById("datas");
+      let res = await fetch(`${url}/getFiles.php`, {
+        method: "get",
+        headers: { "Content-Type": "application/json" },
+      });
+      let datas = await res.json();
+      if (datas.ok) {
+        for (let i = 0; i <= datas.data.length; i++) {
+          let file = datas.data;
+          donwloadContainer.innerHTML += `  <div class="data">
+              <p>${i + 1}.${file[i].file_name}</p>
+              <p>size:${parseFloat(file[i].file_size / 1024).toFixed(2)}KB</p>
+            <a href='${url}/donwload.php?file_id=${
+            file[i].id
+          }' donwload='${url}/donwload.php?file_id=${file[i].id}'>下載</a>
+            </div>`;
+        }
+      } else {
+        donwloadContainer.innerHTML = `<h1>暫無資料</h1>`;
+      }
+    }
+
+    getData();
+  </script>
+</html>
