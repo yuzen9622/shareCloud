@@ -9,30 +9,74 @@
   <body>
     <div class="container">
       <h1>資料共享</h1>
-      <div class="donwload" id="datas"></div>
+      <table class="donwload">
+        <thead>
+          <tr>
+            <th>索引</th>
+            <th>名稱</th>
+            <th>類型</th>
+            <th>大小</th>
+            <th>備註</th>
+          </tr>
+        </thead>
+        <tbody id="datas">
+          <tr>
+            <td>${}</td>
+            <td>${}</td>
+            <td>${}</td>
+            <td>${}</td>
+            <td>${}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </body>
   <script>
-    let url = "https://yuzen.serveirc.com/data share";
+    function changeSize(size) {
+      let sizes = parseFloat(size / 1024).toFixed(2);
+      let name = "KB";
+      if (sizes >= 1024) {
+        sizes = parseFloat(sizes / 1024).toFixed(2);
+        name = "MB";
+      }
+      return `${sizes}${name}`;
+    }
+    console.log(changeSize(3000000));
+    //let url = "https://yuzen.serveirc.com/data share";
+    let url = "http://127.0.0.1/data share";
     async function getData() {
-      let donwloadContainer = document.getElementById("datas");
-      let res = await fetch(`${url}/getFiles.php`, {
-        method: "get",
-        headers: { "Content-Type": "application/json" },
-      });
-      let datas = await res.json();
-      if (datas.ok) {
-        for (let i = 0; i <= datas.data.length; i++) {
-          let file = datas.data;
-          donwloadContainer.innerHTML += `  <div class="data">
-              <p>${i + 1}.${file[i].file_name}</p>
-              <p>size:${parseFloat(file[i].file_size / 1024).toFixed(2)}KB</p>
-            <a href='${url}/donwload.php?file_id=${
-            file[i].id
-          }' donwload='${url}/donwload.php?file_id=${file[i].id}'>下載</a>
-            </div>`;
+      try {
+        let donwloadContainer = document.getElementById("datas");
+        donwloadContainer.innerHTML = `<h1>loading...</h1>`;
+        let res = await fetch(`${url}/getFiles.php`, {
+          method: "get",
+          headers: { "Content-Type": "application/json" },
+        });
+        donwloadContainer.innerHTML = ``;
+        if (res.ok) {
+          let datas = await res.json();
+          for (let i = 0; i <= datas.data.length; i++) {
+            let file = datas.data;
+
+            donwloadContainer.innerHTML += `<tr class="data">
+            <td>${i + 1}</td>
+            <td class="name">${file[i].file_name}</td>
+            <td class='type'>${file[i].file_name
+              .split(".")
+              .pop()
+              .toUpperCase()}</td>
+            <td class="size">${changeSize(file[i].file_size)}</td>
+            <td><a href='${url}/donwload.php?file_id=${
+              file[i].id
+            }' donwload='${url}/donwload.php?file_id=${
+              file[i].id
+            }'>下載</a></td>
+          </tr>`;
+          }
+        } else {
+          throw new Error("error");
         }
-      } else {
+      } catch (error) {
         donwloadContainer.innerHTML = `<h1>暫無資料</h1>`;
       }
     }
