@@ -131,20 +131,25 @@ popbox.style.display='none'
         let formData = new FormData();
         if (datas?.files?.length < 1) return;
         for (const element of datas.files) {
-          resEl.innerHTML = "<h1>loading...</h1>";
-          formData.append("file", element);
-          let res = await fetch(`${url}/upload.php`, {
-            method: "post",
-            body: formData,
-          });
-          let resData = await res.json();
+          try {
+            resEl.innerHTML = "<h1>loading...</h1>";
+            formData.append("file", element);
+            let res = await fetch(`${url}/upload.php`, {
+              method: "post",
+              body: formData,
+            });
 
-          resEl.innerHTML = `<h1>${resData}</h1>`;
+            let resData = await res.json();
+            resEl.innerHTML = `<h1>${resData}</h1>`;
 
-          setTimeout(() => {
-            resEl.innerHTML = "";
-          }, 3000);
-          console.log(resData);
+            console.log(resData);
+          } catch (error) {
+            console.log(error);
+          } finally {
+            setTimeout(() => {
+              resEl.innerHTML = "";
+            }, 3000);
+          }
         }
         getData();
         datas.value = "";
