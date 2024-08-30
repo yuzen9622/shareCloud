@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .pop {
+        position: absolute;
+        top: 50%;
+        right: 50%;
+        transform: translate(50%, -50%);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0, 0, 0, 0.268);
+        width: 100vw;
+        height: 100vh;
+      }
+      .pop input {
+        width: 50%;
+        max-width: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <input type="file" name="file" multiple id="datas" />
+    <button onclick="upload()">上傳</button>
+    <div class="pop">
+      <label for="user">user</label>
+      <input type="text" id="user" />
+      <label for="pass">password</label>
+      <input type="password" id="pass" />
+    </div>
+
+    <div id="res"></div>
+    <ol id="data"></ol>
+    <script>
+      let url = "https://yuzen.serveirc.com/data share";
+      // let url = "http://127.0.0.1/data share";
+
+      async function upload() {
+        let data = document.getElementById("datas");
+        console.log(data.files.length);
+        let formData = new FormData();
+        for (const element of data.files) {
+          formData.append("file", element);
+          let res = await fetch(`${url}/upload.php`, {
+            method: "post",
+            body: formData,
+          });
+          let resData = await res.json();
+          let resEl = document.getElementById("res");
+          resEl.innerHTML = `<h1>${resData}</h1>`;
+          console.log(resData);
+          getData();
+        }
+      }
+
+      async function getData() {
+        try {
+          let donwloadContainer = document.getElementById("data");
+          donwloadContainer.innerHTML = `<h1>loading...</h1>`;
+          let res = await fetch(`${url}/getFiles.php`, {
+            method: "get",
+            headers: { "Content-Type": "application/json" },
+          });
+          donwloadContainer.innerHTML = ``;
+          if (res.ok) {
+            let datas = await res.json();
+            for (let i = 0; i <= datas.data.length; i++) {
+              let file = datas.data;
+              donwloadContainer.innerHTML += `<div class="file" id="${i}">
+
+                  <li>
+                <p>${file[i].file_name}</p>
+
+                <p>size:${parseFloat(file[i].file_size / 1024).toFixed(2)}KB</p>
+              <button onclick="deleted(${i},${file[i].id})">delete</button>
+              </li>
+              </div>`;
+            }
+          } else {
+            throw new Error("error");
+          }
+        } catch (error) {
+          donwloadContainer.innerHTML = `<h1>暫無資料</h1>`;
+        }
+      }
+      getData();
+
+      async function deleted(elId, id) {
+        let user = document.getElementById("user").value;
+        let pass = document.getElementById("pass").value;
+        let datas = document.querySelectorAll(".file");
+
+        let res = await fetch(`${url}/remove.php`, {
+          method: "post",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user: user,
+            pass: pass,
+            file_id: id,
+          }),
+        });
+        let data = await res.json();
+        if (data == "delete successful") {
+          getData();
+        }
+      }
+    </script>
+  </body>
+</html>
