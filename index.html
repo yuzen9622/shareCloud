@@ -66,7 +66,9 @@
               .pop()
               .toUpperCase()}</td>
             <td class="size">${changeSize(file[i].file_size)}</td>
-            <td><a href='${url}/preview.php?file_id=${file[i].id}'>檢視</a></td>
+            <td><a href='${url}/preview.php?file_id=${
+              file[i].id
+            }' target='_BLANK'>檢視</a></td>
             <td><a href='${url}/donwload.php?file_id=${
               file[i].id
             }' donwload='${url}/donwload.php?file_id=${

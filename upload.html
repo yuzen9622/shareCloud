@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- <script type="module" src="script.js"></script> -->
+    <link rel="stylesheet" href="./style.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <style>
@@ -11,7 +11,7 @@
         top: 50%;
         right: 50%;
         transform: translate(50%, -50%);
-        display: flex;
+        display: none;
         flex-direction: column;
         align-items: center;
         justify-content: center;
@@ -23,51 +23,136 @@
         width: 50%;
         max-width: 400px;
       }
+      td {
+        padding: 5px;
+      }
+      .uploadfiles button {
+        width: 50%;
+        height: 50px;
+      }
+      .uploadfiles {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        width: 100%;
+      }
     </style>
   </head>
   <body>
-    <input type="file" name="file" multiple id="datas" />
-    <button onclick="upload()">上傳</button>
     <div class="pop">
       <label for="user">user</label>
-      <input type="text" id="user" />
+      <input type="text" id="user" value="oscar" />
       <label for="pass">password</label>
-      <input type="password" id="pass" />
+      <input type="password" id="pass" value="O48079scar" />
       <button
         onclick="(
 function (){
-  let popbox=document.querySelector('.pop');
-  popbox.style.display='none'
-  
+let popbox=document.querySelector('.pop');
+popbox.style.display='none'
+
 }
-      )()"
+    )()"
       >
         確認
       </button>
     </div>
+    <div class="container">
+      <div class="uploadfiles">
+        <h1>上傳文件</h1>
+        <input type="file" name="file" multiple id="datas" />
 
-    <div id="res"></div>
-    <ol id="data"></ol>
+        <div id="res"></div>
+
+        <table>
+          <tr>
+            <th>索引</th>
+            <th>名稱</th>
+            <th>大小</th>
+            <th>備註</th>
+          </tr>
+          <tbody id="uploadFiles"></tbody>
+        </table>
+        <div id="count"></div>
+        <div id="bytes"></div>
+        <button onclick="upload()">上傳</button>
+      </div>
+
+      <div class="nowfiles">
+        <h1>目前文件</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>索引</th>
+              <th>名稱</th>
+              <th>大小</th>
+              <th>備註</th>
+            </tr>
+          </thead>
+          <tbody id="data">
+            <tr>
+              <td>${}</td>
+              <td>${}</td>
+              <td>${}</td>
+              <td>${}</td>
+              <td>${}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
     <script src="./script.js"></script>
     <script>
+      let datas = document.getElementById("datas");
+      let resEl = document.getElementById("res");
+      let uploadFilesEl = document.getElementById("uploadFiles");
+      let countEl = document.getElementById("count");
+      let byteEl = document.getElementById("bytes");
+
+      datas.addEventListener("input", (e) => {
+        let countByte = 0;
+        console.log(e.target.files);
+        countEl.textContent = `${e.target.files.length}個文件`;
+        uploadFilesEl.innerHTML = "";
+        i = 1;
+        for (const element of e.target.files) {
+          countByte += element.size;
+          uploadFilesEl.innerHTML += ` <tr>
+        <td>${i}</td>
+        <td>${element.name}</td>
+        <td>${element.size}byte</td>
+        <td></td>
+      </tr>`;
+          i++;
+        }
+        byteEl.textContent = `${countByte}bytes`;
+      });
       async function upload() {
-        let data = document.getElementById("datas");
-        console.log(data.files.length);
         let formData = new FormData();
-        for (const element of data.files) {
+        if (datas?.files?.length < 1) return;
+        for (const element of datas.files) {
+          resEl.innerHTML = "<h1>loading...</h1>";
           formData.append("file", element);
           let res = await fetch(`${url}/upload.php`, {
             method: "post",
             body: formData,
           });
           let resData = await res.json();
-          let resEl = document.getElementById("res");
+
           resEl.innerHTML = `<h1>${resData}</h1>`;
+
+          setTimeout(() => {
+            resEl.innerHTML = "";
+          }, 3000);
           console.log(resData);
-          getData();
         }
+        getData();
+        datas.value = "";
+        uploadFilesEl.innerHTML = "";
+        countEl.textContent = null;
+        byteEl.textContent = null;
       }
-      !function (window) {};
+
       async function getData() {
         let donwloadContainer = document.getElementById("data");
         try {
@@ -81,17 +166,18 @@ function (){
             let datas = await res.json();
             for (let i = 0; i <= datas.data.length; i++) {
               let file = datas.data;
-              donwloadContainer.innerHTML += `<div class="file" id="${i}">
+              donwloadContainer.innerHTML += `<tr class="file" id="${i}">
 
-                        <li>
-                      <p>${file[i].file_name}</p>
+                        <td>${i + 1}</td>
+                      <td>${file[i].file_name}</td>
 
-                      <p>size:${parseFloat(file[i].file_size / 1024).toFixed(
+                      <td>${parseFloat(file[i].file_size / 1024).toFixed(
                         2
-                      )}KB</p>
+                      )}KB</td>
+                      <td>
                     <button onclick="deleted(${file[i].id})">delete</button>
-                    </li>
-                    </div>`;
+                 </td>
+                    </tr>`;
             }
           } else {
             donwloadContainer.innerHTML = `<h1>暫無資料</h1>`;
