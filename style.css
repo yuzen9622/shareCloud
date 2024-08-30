@@ -23,20 +23,22 @@ body{
 
 }
 .donwload{
-max-width: 600px;
-min-width: 300px;
-width: 70%;
+    max-width: 600px;
+    min-width: 300px;
+    width: 70%;
 }
+
 td{
+    border: 1px double var(--sky-blue);
     text-align: center;
     font-size: 20px;
+    padding: 5px 0;
 }
 .data a{
     padding: 5px;
     color: var(--sky-blue);
-text-decoration: none;
-
-border-radius: 15px;
+    text-decoration: none;
+    border-radius: 15px;
 }
 .data a:hover{
     text-decoration: underline;
@@ -54,5 +56,14 @@ border-radius: 15px;
 }
 .size{
     color: red;
+}
+@media screen and (max-width:500px) {
+    .donwload{
+        width: 100%;
+       
+    }
+    td{
+     font-size: 16px;       
+    }
 }
 
