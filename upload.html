@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="./style.css" />
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <style>
@@ -61,17 +62,15 @@
   <body>
     <div class="pop">
       <label for="user">user</label>
-      <input type="text" id="user" />
+      <input type="text" id="user" value="oscar" />
       <label for="pass">password</label>
-      <input type="password" id="pass" />
+      <input type="password" id="pass" value="O48079scar" />
       <button
         onclick="(
 function (){
 let popbox=document.querySelector('.pop');
 popbox.style.display='none'
-
-}
-    )()"
+})()"
       >
         確認
       </button>
@@ -134,8 +133,10 @@ popbox.style.display='none'
       let uploadFilesEl = document.getElementById("uploadFiles");
       let countEl = document.getElementById("count");
       let byteEl = document.getElementById("bytes");
+      let donwloadContainer = document.getElementById("data");
       let dir_datas = document.getElementById("dir_datas");
       let allFiles = [];
+      let donwloadData = [];
 
       datas.addEventListener("input", (e) => {
         for (const element of e.target.files) {
@@ -167,6 +168,28 @@ popbox.style.display='none'
         byteEl.textContent = bytes + "bytes";
       }
 
+      function renderdonwloadData(data) {
+        donwloadContainer.innerHTML = "";
+        console.log(data);
+        data.forEach((element, key) => {
+          donwloadContainer.innerHTML += `
+          <tr class="file" id="${key}">
+
+                        <td>${key + 1}</td>
+                      <td>${element.file_name}</td>
+
+                      <td>${parseFloat(element.file_size / 1024).toFixed(
+                        2
+                      )}KB</td>
+                      <td>
+                    <button onclick="deleted(${key},${
+            element.id
+          })">delete</button>
+                 </td>
+                    </tr>`;
+        });
+      }
+
       async function upload(e) {
         let formData = new FormData();
         if (allFiles.length > 0) {
@@ -179,13 +202,17 @@ popbox.style.display='none'
               e.textContent = "loading...";
               e.disabled = true;
               formData.append("file", element);
-              let res = await fetch(`${url}/upload.php`, {
-                method: "post",
-                body: formData,
-              });
+              let config = {
+                onUploadProgress: (ProgressEvent) => {
+                  let persent =
+                    ((ProgressEvent.loaded / ProgressEvent.total) * 100) | 0;
+                  status[i].textContent = persent + "%";
+                },
+              };
+              let res = await axios.post(`${url}/upload.php`, formData, config);
 
-              let resData = await res.json();
-              if (resData) {
+              let resData = await res.status;
+              if (resData === 200) {
                 status[i].textContent = "成功";
               } else {
                 status[i].textContent = "失敗";
@@ -208,6 +235,7 @@ popbox.style.display='none'
           byteEl.textContent = null;
           e.textContent = "上傳";
           e.disabled = false;
+          allFiles = [];
           setTimeout(() => {
             resEl.innerHTML = "";
           }, 3000);
@@ -215,31 +243,23 @@ popbox.style.display='none'
       }
 
       async function getData() {
-        let donwloadContainer = document.getElementById("data");
         try {
           donwloadContainer.innerHTML = `<h1>loading...</h1>`;
-          let res = await fetch(`${url}/getFiles.php`, {
+          let res = await axios.get(`${url}/getFiles.php`, {
             method: "get",
             headers: { "Content-Type": "application/json" },
           });
+          console.log(res);
           donwloadContainer.innerHTML = ``;
-          if (res.ok) {
-            let datas = await res.json();
-            for (let i = 0; i <= datas.data.length; i++) {
+          if (res.status === 200) {
+            let datas = await res.data;
+            donwloadData = [];
+            for (let i = 0; i < datas.data.length; i++) {
               let file = datas.data;
-              donwloadContainer.innerHTML += `<tr class="file" id="${i}">
-
-                        <td>${i + 1}</td>
-                      <td>${file[i].file_name}</td>
-
-                      <td>${parseFloat(file[i].file_size / 1024).toFixed(
-                        2
-                      )}KB</td>
-                      <td>
-                    <button onclick="deleted(${file[i].id})">delete</button>
-                 </td>
-                    </tr>`;
+              donwloadData.push(file[i]);
             }
+            console.log(donwloadData);
+            renderdonwloadData(donwloadData);
           } else {
             donwloadContainer.innerHTML = `<h1>暫無資料</h1>`;
           }
@@ -249,7 +269,7 @@ popbox.style.display='none'
       }
       getData();
 
-      async function deleted(id) {
+      async function deleted(key, id) {
         let user = document.getElementById("user").value;
         let pass = document.getElementById("pass").value;
 
@@ -264,7 +284,8 @@ popbox.style.display='none'
         });
         let data = await res.json();
         if (data == "delete successful") {
-          getData();
+          donwloadData.splice(key, 1);
+          renderdonwloadData(donwloadData);
         }
       }
     </script>
