@@ -37,14 +37,33 @@
         flex-direction: column;
         width: 100%;
       }
+      .upload-container {
+        position: relative;
+        width: 150px;
+        text-align: center;
+        margin: 5px;
+        color: var(--dark-color);
+        font-weight: bolder;
+        background-color: var(--skin-color);
+        border: 1px solid var(--skin-color);
+      }
+      input[type="file"] {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        z-index: 1;
+      }
     </style>
   </head>
   <body>
     <div class="pop">
       <label for="user">user</label>
-      <input type="text" id="user" value="oscar" />
+      <input type="text" id="user" />
       <label for="pass">password</label>
-      <input type="password" id="pass" value="O48079scar" />
+      <input type="password" id="pass" />
       <button
         onclick="(
 function (){
@@ -60,7 +79,14 @@ popbox.style.display='none'
     <div class="container">
       <div class="uploadfiles">
         <h1>上傳文件</h1>
-        <input type="file" name="file" multiple id="datas" />
+        <div class="upload-container">
+          <p>選擇文件</p>
+          <input type="file" name="file" multiple id="datas" />
+        </div>
+        <div class="upload-container">
+          <p>選擇資料夾</p>
+          <input type="file" name="file" webkitdirectory id="dir_datas" />
+        </div>
 
         <div id="res"></div>
 
@@ -75,7 +101,7 @@ popbox.style.display='none'
         </table>
         <div id="count"></div>
         <div id="bytes"></div>
-        <button onclick="upload()">上傳</button>
+        <button onclick="upload(this)">上傳</button>
       </div>
 
       <div class="nowfiles">
@@ -108,54 +134,84 @@ popbox.style.display='none'
       let uploadFilesEl = document.getElementById("uploadFiles");
       let countEl = document.getElementById("count");
       let byteEl = document.getElementById("bytes");
+      let dir_datas = document.getElementById("dir_datas");
+      let allFiles = [];
 
       datas.addEventListener("input", (e) => {
-        let countByte = 0;
-        console.log(e.target.files);
-        countEl.textContent = `${e.target.files.length}個文件`;
-        uploadFilesEl.innerHTML = "";
-        i = 1;
         for (const element of e.target.files) {
-          countByte += element.size;
-          uploadFilesEl.innerHTML += ` <tr>
-        <td>${i}</td>
-        <td>${element.name}</td>
-        <td>${element.size}byte</td>
-        <td></td>
-      </tr>`;
-          i++;
+          allFiles.push(element);
         }
-        byteEl.textContent = `${countByte}bytes`;
+        renderFiles(allFiles);
       });
-      async function upload() {
-        let formData = new FormData();
-        if (datas?.files?.length < 1) return;
-        for (const element of datas.files) {
-          try {
-            resEl.innerHTML = "<h1>loading...</h1>";
-            formData.append("file", element);
-            let res = await fetch(`${url}/upload.php`, {
-              method: "post",
-              body: formData,
-            });
 
-            let resData = await res.json();
-            resEl.innerHTML = `<h1>${resData}</h1>`;
-
-            console.log(resData);
-          } catch (error) {
-            console.log(error);
-          } finally {
-            setTimeout(() => {
-              resEl.innerHTML = "";
-            }, 3000);
-          }
+      dir_datas.addEventListener("input", (e) => {
+        for (const element of e.target.files) {
+          allFiles.push(element);
         }
-        getData();
-        datas.value = "";
+        renderFiles(allFiles);
+      });
+
+      function renderFiles(datas = []) {
         uploadFilesEl.innerHTML = "";
-        countEl.textContent = null;
-        byteEl.textContent = null;
+        let bytes = 0;
+        datas.forEach((element, key) => {
+          bytes += element.size;
+          uploadFilesEl.innerHTML += `<tr>
+              <td>${key + 1}</td>
+              <td>${element.name}</td>
+              <td>${element.size}bytes</td>
+              <td id='status'>待上傳</td>
+            </tr>`;
+        });
+        countEl.textContent = "0/" + datas.length + "檔案";
+        byteEl.textContent = bytes + "bytes";
+      }
+
+      async function upload(e) {
+        let formData = new FormData();
+        if (allFiles.length > 0) {
+          let i = 0;
+          let status = document.querySelectorAll("#status");
+          for (const element of allFiles) {
+            console.log(status);
+            try {
+              status[i].textContent = "正在上傳";
+              e.textContent = "loading...";
+              e.disabled = true;
+              formData.append("file", element);
+              let res = await fetch(`${url}/upload.php`, {
+                method: "post",
+                body: formData,
+              });
+
+              let resData = await res.json();
+              if (resData) {
+                status[i].textContent = "成功";
+              } else {
+                status[i].textContent = "失敗";
+              }
+
+              console.log(resData);
+            } catch (error) {
+              console.log(error);
+            } finally {
+              countEl.textContent = `${i + 1}/${allFiles.length}`;
+              i++;
+            }
+          }
+
+          getData();
+          datas.value = "";
+          dir_datas.value = "";
+          uploadFilesEl.innerHTML = "";
+          countEl.textContent = null;
+          byteEl.textContent = null;
+          e.textContent = "上傳";
+          e.disabled = false;
+          setTimeout(() => {
+            resEl.innerHTML = "";
+          }, 3000);
+        }
       }
 
       async function getData() {
