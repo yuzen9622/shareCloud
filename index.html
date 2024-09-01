@@ -60,7 +60,9 @@
 
             donwloadContainer.innerHTML += `<tr class="data">
             <td>${i + 1}</td>
-            <td class="name">${file[i].file_name}</td>
+            <td class="name" title='${file[i].file_name}'>${
+              file[i].file_name
+            }</td>
             <td class='type'>${file[i].file_name
               .split(".")
               .pop()
